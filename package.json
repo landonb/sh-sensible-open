@@ -1,0 +1,15 @@
+{
+  "name": "sh-sensible-open",
+  "version": "0.0.1",
+  "repo": "landonb/sh-sensible-open",
+  "description": "Injectable RGB color and display attribute functions",
+  "keywords": ["terminal", "term", "sensible-browser", "open", "web", "browser", "new", "window"],
+  "license": "MIT",
+  "scripts": [
+    "bin/_sensibleopen-browser-nickname",
+    "bin/_sensibleopen-format-open-command",
+    "bin/sensible-open"
+  ],
+  "install": "make install",
+}
+

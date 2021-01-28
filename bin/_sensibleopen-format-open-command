@@ -1,0 +1,297 @@
+#!/bin/sh
+# vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+# Author: Landon Bouma (landonb &#x40; retrosoft &#x2E; com)
+# Project: https://github.com/landonb/sh-sensible-open#☔
+# License: MIT (See LICENSE file)
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_format_command_parse_args () {
+  SENSIBLE_OPEN_LOCATION="${SENSIBLE_OPEN_LOCATION}"
+  SENSIBLE_OPEN_PRIVATE="${SENSIBLE_OPEN_PRIVATE:-false}"
+  SENSIBLE_OPEN_USE_TAB="${SENSIBLE_OPEN_USE_TAB:-false}"
+
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -p | --private | -i | --incognito)
+        SENSIBLE_OPEN_PRIVATE=true
+        shift
+        ;;
+      -t | --tab)
+        SENSIBLE_OPEN_USE_TAB=true
+        shift
+        ;;
+      -h | --help)
+        echo "USAGE: $0 [-p|--private|--incognito] [-t|--tab] <path-or-URL>"
+        exit 0
+        ;;
+      --)
+        shift
+        break
+        ;;
+      *)
+        SENSIBLE_OPEN_LOCATION="$1"
+        shift
+        ;;
+    esac
+  done
+
+  [ -n "${SENSIBLE_OPEN_LOCATION}" ] || SENSIBLE_OPEN_LOCATION="$1"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_format_open_command () {
+  _sensibleopen_format_command_parse_args "$@"
+
+  local location="${SENSIBLE_OPEN_LOCATION}"
+  local is_private=${SENSIBLE_OPEN_PRIVATE:-false}
+  local is_tabbing=${SENSIBLE_OPEN_USE_TAB:-false}
+
+  local browser_nickname=""
+  browser_nickname="$(_sensibleopen_browser_nickname)" ||
+    return $?
+
+  local open_options="$(
+    _sensibleopen_format_options \
+      "${browser_nickname}" "${options}" "${is_private}" "${is_tabbing}"
+  )"
+
+  local open_cmd="$( \
+    _sensibleopen_format_command "${browser_nickname}" "${open_options}"
+  )"
+
+  if [ -n "${location}" ]; then
+    # You can pass a relative path to `sensible-browser` (and Chrome)
+    # on Linux, and it'll work; but on macOS, it gets treated differently.
+    # So fully qualify the location.
+    [ -f "${location}" ] && location="$(readlink_f "${location}")"
+    # Quote it, in case spaces in path name.
+    location="\"${location}\""
+  fi
+
+  printf '%s\n' "${open_cmd} ${open_options}${location}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_format_options () {
+  local browser_nickname"$1"
+  local options"$2"
+  local is_private"$3"
+  local is_tabbing="$4"
+
+  local options=""
+  options="$(_sensibleopen_add_option_is_private "${browser_nickname}" "${options}" "${is_private}")"
+  options="$(_sensibleopen_add_option_new_window "${browser_nickname}" "${options}" "${is_tabbing}")"
+
+  printf '%s' "${options}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_add_option_is_private () {
+  local browser_nickname="$1"
+  local options="$2"
+  local is_private="${3:-false}"
+
+  if ${is_private}; then
+    if [ "${browser_nickname}" = 'chrome' ]; then
+      options="${options}--incognito "
+    elif [ "${browser_nickname}" = 'firefox' ]; then
+      options="${options}--private-window "
+    fi
+  fi
+
+  printf '%s' "${options}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_add_option_new_window () {
+  local browser_nickname="$1"
+  local options="$2"
+  local is_tabbing="${3:-false}"
+
+  if ! ${is_tabbing}; then
+    if false \
+      || [ "${browser_nickname}" = 'chrome' ] \
+      || [ "${browser_nickname}" = 'firefox' ] \
+    ; then
+      options="${options}--new-window "
+    fi
+  fi
+
+  printf '%s' "${options}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# - Sending arguments to macOS browser requires two options to `open`.
+#   - A basic `open -a 'Google Chrome' URL` opens a URL in new tab of
+#     existing window, akin to a basic `sensible-browser URL` on Linux.
+#   - The `open` has an `--args` option to precede pass-through options,
+#     but you also need to add `-n` so open tries to open a new Chrome
+#     instance, which Chrome will capture and kill, and pass control
+#     back to the running instance, "but this is necessary to force
+#     arguments to be read", according and thanks to georgegarside.
+#     E.g.,
+#       open -na "Google Chrome" --args --new-window URL
+#     https://apple.stackexchange.com/a/305902/388088
+_sensibleopen_format_command () {
+  local browser_nickname="$1"
+  local options="$2"
+
+  open_cmd=''
+  if os_is_macos; then
+    if [ -z "${options}" ]; then
+      open_cmd='open -a'
+    else
+      # See comments before function, necessary for --args to be effective.
+      open_cmd='open -na'
+    fi
+    if [ "${browser_nickname}" = 'chrome' ]; then
+      open_cmd="${open_cmd} 'Google Chrome'"
+    elif [ "${browser_nickname}" = 'firefox' ]; then
+      open_cmd="${open_cmd} 'Firefox'"
+    elif [ "${browser_nickname}" = 'safari' ]; then
+      open_cmd="${open_cmd} 'Safari'"
+    fi
+    if [ -n "${options}" ]; then
+      open_cmd="${open_cmd} --args"
+    fi
+  else
+    # The _sensibleopen_browser_nickname checked $BROWSER, so might as well use.
+    #  open_cmd='sensible-browser'
+    open_cmd="${BROWSER}"
+  fi
+
+  printf '%s' "${open_cmd}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+os_is_macos () {
+  [ "$(uname)" = 'Darwin' ]
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ================================================================= #
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# *** <beg boilerplate `source_deps`: ------------------------------|
+#                                                                   |
+
+readlink_f () {
+  local resolve_path="$1"
+  local ret_code=0
+  if [ "$(readlink --version 2> /dev/null)" ]; then
+    # Linux: Modern readlink.
+    resolve_path="$(readlink -f -- "${resolve_path}")"
+  else
+    # macOHHHH-ESS/macOS: No `readlink -f`.
+    local before_cd="$(pwd -L)"
+    local just_once=true
+    while [ -n "${resolve_path}" ] && ( [ -h "${resolve_path}" ] || ${just_once} ); do
+      just_once=false
+      local basedir_link="$(dirname -- "${resolve_path}")"
+      # `readlink -f` checks all but final component exist.
+      # So if dir path leading to final componenet missing, return empty string.
+      if [ ! -e "${basedir_link}" ]; then
+        resolve_path=""
+        ret_code=1
+      else
+        local resolve_file="${resolve_path}"
+        local resolve_link="$(readlink -- "${resolve_path}")"
+        if [ -n "${resolve_link}" ]; then
+          case "${resolve_link}" in
+            /*)
+              # Absolute path.
+              resolve_file="${resolve_link}"
+              ;;
+            *)
+              # Relative path.
+              resolve_file="${basedir_link}/${resolve_link}"
+              ;;
+          esac
+        fi
+        local resolved_dir="$(dirname -- "${resolve_file}")"
+        if [ ! -d "${resolved_dir}" ]; then
+          resolve_path=""
+          ret_code=1
+        else
+          cd "${resolved_dir}" > /dev/null
+          resolve_path="$(pwd -P)/$(basename -- "${resolve_file}")"
+        fi
+      fi
+    done
+    cd "${before_cd}"
+  fi
+  [ -n "${resolve_path}" ] && echo "${resolve_path}"
+  return ${ret_code}
+}
+
+source_deps () {
+  local thispth="$1"
+  local prefix=""
+  local depsnok=false
+
+  _source_it () {
+    local prfx="${1:-.}"
+    local depd="${2:-.}"
+    local file="${3:-.}"
+    local path="${prfx}/${depd}/${file}"
+    if command -v "${file}" > /dev/null; then
+      # Use version found on PATH.
+      . "${file}"
+    elif [ -f "${path}" ]; then
+      # Fallback on local deps/ copy.
+      # NOTE: `dash` complains if missing './'.
+      . "${path}"
+    else
+      local depstxt=''
+      [ "${prfx}" != "." ] && depstxt="in ‘${prfx}/${depd}’ or "
+      >&2 echo "MISSING: ‘${file}’ not found ${depstxt}on PATH."
+      depsnok=true
+    fi
+  }
+
+  # Allow user to symlink executables and not libraries.
+  # E.g., `ln -s /path/to/bin/logger.sh /tmp/logger.sh ; /tmp/logger.sh`
+  # knows that it can look relative to /path/to/bin/ for sourceable files.
+  prefix="$(dirname -- "$(readlink_f "${thispth}")")"
+
+  #                                                                 |
+  # *** stop boilerplate> ------------------------------------------|
+
+  _source_it "${prefix}" "./" "_sensibleopen-browser-nickname"
+
+  # *** <more boilerplate: -----------------------------------------|
+  #                                                                 |
+
+  ! ${depsnok}
+}
+
+#                                                                   |
+# *** end boilerplate `source_deps`> -------------------------------|
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ================================================================= #
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+this_file_name='_sensibleopen-format-open-command'
+shell_sourced () { [ "$(basename -- "$0")" != "${this_file_name}" ]; }
+# Note that bash_sourced only meaningful if shell_sourced is true.
+bash_sourced () { declare -p FUNCNAME > /dev/null 2>&1; }
+
+if ! shell_sourced; then
+  source_deps "$0"
+  _sensibleopen_format_open_command "$@"
+else
+  bash_sourced && export -f _sensibleopen_format_open_command
+  unset this_file_name
+  unset -f shell_sourced
+  unset -f bash_sourced
+  unset -v this_file_name
+fi
+

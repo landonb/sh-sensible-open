@@ -1,0 +1,135 @@
+#!/bin/sh
+# vim:tw=0:ts=2:sw=2:et:norl:ft=bash
+# Author: Landon Bouma (landonb &#x40; retrosoft &#x2E; com)
+# Project: https://github.com/landonb/sh-sensible-open#☔
+# License: MIT (See LICENSE file)
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+sensible_open () {
+  eval "$(_sensibleopen_format_open_command "$@") > /dev/null &"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ================================================================= #
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# *** <beg boilerplate `source_deps`: ------------------------------|
+#                                                                   |
+
+readlink_f () {
+  local resolve_path="$1"
+  local ret_code=0
+  if [ "$(readlink --version 2> /dev/null)" ]; then
+    # Linux: Modern readlink.
+    resolve_path="$(readlink -f -- "${resolve_path}")"
+  else
+    # macOHHHH-ESS/macOS: No `readlink -f`.
+    local before_cd="$(pwd -L)"
+    local just_once=true
+    while [ -n "${resolve_path}" ] && ( [ -h "${resolve_path}" ] || ${just_once} ); do
+      just_once=false
+      local basedir_link="$(dirname -- "${resolve_path}")"
+      # `readlink -f` checks all but final component exist.
+      # So if dir path leading to final componenet missing, return empty string.
+      if [ ! -e "${basedir_link}" ]; then
+        resolve_path=""
+        ret_code=1
+      else
+        local resolve_file="${resolve_path}"
+        local resolve_link="$(readlink -- "${resolve_path}")"
+        if [ -n "${resolve_link}" ]; then
+          case "${resolve_link}" in
+            /*)
+              # Absolute path.
+              resolve_file="${resolve_link}"
+              ;;
+            *)
+              # Relative path.
+              resolve_file="${basedir_link}/${resolve_link}"
+              ;;
+          esac
+        fi
+        local resolved_dir="$(dirname -- "${resolve_file}")"
+        if [ ! -d "${resolved_dir}" ]; then
+          resolve_path=""
+          ret_code=1
+        else
+          cd "${resolved_dir}" > /dev/null
+          resolve_path="$(pwd -P)/$(basename -- "${resolve_file}")"
+        fi
+      fi
+    done
+    cd "${before_cd}"
+  fi
+  [ -n "${resolve_path}" ] && echo "${resolve_path}"
+  return ${ret_code}
+}
+
+source_deps () {
+  local thispth="$1"
+  local prefix=""
+  local depsnok=false
+
+  _source_it () {
+    local prfx="${1:-.}"
+    local depd="${2:-.}"
+    local file="${3:-.}"
+    local path="${prfx}/${depd}/${file}"
+    if command -v "${file}" > /dev/null; then
+      # Use version found on PATH.
+      . "${file}"
+    elif [ -f "${path}" ]; then
+      # Fallback on local deps/ copy.
+      # NOTE: `dash` complains if missing './'.
+      . "${path}"
+    else
+      local depstxt=''
+      [ "${prfx}" != "." ] && depstxt="in ‘${prfx}/${depd}’ or "
+      >&2 echo "MISSING: ‘${file}’ not found ${depstxt}on PATH."
+      depsnok=true
+    fi
+  }
+
+  # Allow user to symlink executables and not libraries.
+  # E.g., `ln -s /path/to/bin/logger.sh /tmp/logger.sh ; /tmp/logger.sh`
+  # knows that it can look relative to /path/to/bin/ for sourceable files.
+  prefix="$(dirname -- "$(readlink_f "${thispth}")")"
+
+  #                                                                 |
+  # *** stop boilerplate> ------------------------------------------|
+
+  _source_it "${prefix}" "./" "_sensibleopen-format-open-command"
+  # In lieu of the previous command calling its source_deps,
+  # which it only does when executed (not sourced), do here:
+  _source_it "${prefix}" "./" "_sensibleopen-browser-nickname"
+
+  # *** <more boilerplate: -----------------------------------------|
+  #                                                                 |
+
+  ! ${depsnok}
+}
+
+#                                                                   |
+# *** end boilerplate `source_deps`> -------------------------------|
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ================================================================= #
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+this_file_name='sensible-open'
+shell_sourced () { [ "$(basename -- "$0")" != "${this_file_name}" ]; }
+# Note that bash_sourced only meaningful if shell_sourced is true.
+bash_sourced () { declare -p FUNCNAME > /dev/null 2>&1; }
+
+if ! shell_sourced; then
+  source_deps "$0"
+  sensible_open "$@"
+else
+  bash_sourced && export -f sensible_open
+  unset this_file_name
+  unset -f shell_sourced
+  unset -f bash_sourced
+  unset -v this_file_name
+fi
+

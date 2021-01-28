@@ -9,6 +9,7 @@ macOS_which_browser () {
   # Guard clause: Ensure Property List exists (and, by extension, is-macOS).
   if [ ! -f "${proplist}" ]; then
     >&2 printf '%s\n' "ERROR: Not found: LaunchServices Property List: ‘${proplist}’"
+    >&2 printf '%s\n' " (Are you running on macOS?)"
     return 1
   fi
 

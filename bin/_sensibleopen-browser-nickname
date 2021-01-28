@@ -4,12 +4,40 @@
 # Project: https://github.com/landonb/sh-sensible-open#☔
 # License: MIT (See LICENSE file)
 
-macOS_which_browser () {
+# 2021-01-28: SNYC_ME: See related functionality (Vim plugin):
+#
+#   https://github.com/landonb/dubs_web_hatch#🐣
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_browser_nickname () {
+  local browser_nickname
+  local bundle_id_or_path
+
+  if os_is_macos; then
+    bundle_id_or_path="$(_sensibleopen_macOS_default_browser)" || return $?
+    browser_nickname="$(_sensibleopen_macOS_browser_nickname "${bundle_id_or_path}")"
+  else
+    bundle_id_or_path="$(_sensibleopen_Linux_default_browser)" || return $?
+    browser_nickname="$(_sensibleopen_Linux_browser_nickname "${bundle_id_or_path}")"
+  fi
+
+  if [ -z "${browser_nickname}" ]; then
+    >&2 echo "ERROR: Unrecognized default browser: ${bundle_id_or_path}"
+    exit 1
+  fi
+
+  printf "${browser_nickname}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_macOS_default_browser () {
   local proplist="${HOME}/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
+
   # Guard clause: Ensure Property List exists (and, by extension, is-macOS).
   if [ ! -f "${proplist}" ]; then
     >&2 printf '%s\n' "ERROR: Not found: LaunchServices Property List: ‘${proplist}’"
-    >&2 printf '%s\n' " (Are you running on macOS?)"
     return 1
   fi
 
@@ -26,7 +54,8 @@ macOS_which_browser () {
   # Convert the Property List to JSON.
   plutil -convert json "${tempfile}"
 
-  # Locate both the 'http' or 'https' handlers.
+  # Note there are both 'http' or 'https' handlers.
+  # - Does it matter? We can compare and complain, I suppose
   local handler_http=$( \
     cat "${tempfile}" | \
       /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "http") | .LSHandlerRoleAll' \
@@ -35,27 +64,94 @@ macOS_which_browser () {
     cat "${tempfile}" | \
       /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "https") | .LSHandlerRoleAll' \
     )
+
   printf '%s' "${handler_http}"
+
   # (lb): I'd expect the handlers to match, but perhaps not.
+  # MAYBE/2021-01-27: If anyone sees this fire, tell me how.
   if [ "${handler_http}" != "${handler_https}" ]; then
-    printf '%s' " ${handler_https}"
+    >&2 printf 'HTTPS: %s' " ${handler_https}"
   fi
+
   return 0
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-this_file_name="macOS-which-browser"
+_sensibleopen_macOS_browser_nickname () {
+  local bundle_id_or_path="$1"
+
+  local which_browser
+  if [ "${bundle_id_or_path}" = 'com.google.chrome' ]; then
+    printf 'chrome'
+  elif [ "${bundle_id_or_path}" = 'org.mozilla.firefox' ]; then
+    printf 'firefox'
+  elif [ "${bundle_id_or_path}" = 'com.apple.safari' ]; then
+    # /Applications/Sarari.app/Contents/MacOS/Safari
+    # Note that Safari (a Cocoa app, not a CLI app) does not accept arguments.
+    printf 'safari'
+  fi
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_Linux_default_browser () {
+  # Ref: /usr/bin/sensible-browser
+
+  # NOTE: If ${BROWSER} not set, could try, e.g.,
+  #
+  #         $ sensible-browser --version
+  #         Google Chrome 88.0.4324.96
+  #         Mozilla Firefox 84.0.2
+  #         Chromium 87.0.4280.66 Built on Ubuntu , running on LinuxMint 19.3
+
+  if test -z "${BROWSER}"; then
+    printf "ERROR: Please set the BROWSER environment variable to your desired browser.\n" >&2
+    return 1
+  fi
+
+  printf "${BROWSER}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+_sensibleopen_Linux_browser_nickname () {
+  local bundle_id_or_path="$1"
+
+  local which_browser
+  if false \
+    || [ "$(basename ${bundle_id_or_path})" = 'google-chrome' ] \
+    || [ "$(basename ${bundle_id_or_path})" = 'google-chrome-stable' ] \
+    || [ "$(basename ${bundle_id_or_path})" = 'chromium-browser' ] \
+  ; then
+    printf 'chrome'
+  elif [ "$(basename ${bundle_id_or_path})" = 'firefox' ]; then
+    printf 'firefox'
+  fi
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+os_is_macos () {
+  [ "$(uname)" = 'Darwin' ]
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+# ================================================================= #
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+this_file_name="_sensibleopen-browser-nickname"
 shell_sourced () { [ "$(basename -- "$0")" != "${this_file_name}" ]; }
 # Note that bash_sourced only meaningful if shell_sourced is true.
 bash_sourced () { declare -p FUNCNAME > /dev/null 2>&1; }
 
 if ! shell_sourced; then
-  macOS_which_browser "${@}"
+  _sensibleopen_browser_nickname "${@}"
 else
-  bash_sourced && export -f macOS_which_browser
+  bash_sourced && export -f _sensibleopen_browser_nickname
   unset this_file_name
   unset -f shell_sourced
   unset -f bash_sourced
+  unset -v this_file_name
 fi
 

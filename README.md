@@ -62,12 +62,42 @@ to be explicit about the location, e.g.,
 ### Vim usage
 
 See the Vim plugin
-[dubs_web_hatch]( https://github.com/landonb/dubs_web_hatch)
+[dubs_web_hatch](https://github.com/landonb/dubs_web_hatch)
 which uses this project to enable a feature that lets you
 open the file or URL under the cursor in a new browser window.
 
 E.g., you might put your cursor over a file path or URL and
 type `gW` to go to that address in a web browser.
+
+### Use new browser window with `webpack-dev-server`
+
+This is a hack for developing JavaScript applications on macOS.
+
+The v3 series of
+[`webpack-dev-server`](https://github.com/webpack/webpack-dev-server)
+uses the older [`opn`](https://www.npmjs.com/package/opn) package,
+which uses the macOS `open` command and opens the passed URL in a
+new browser tab of an existing window.
+
+If you'd instead like the server to open your application in a new
+browser window when it starts, you can kludge the `opn` library in
+`node_modules` to call `sensible-open` instead, e.g., running this:
+
+  ```shell
+  sed \
+    -i \
+    -E "s#^\t\tcmd = 'open';\$#\t\tcmd = 'sensible-open';#" \
+    node_modules/opn/index.js
+  ```
+
+from the root of your project (after you've run `npm install`)
+will patch at least the v5.5.0 version of `opn` (that the v3.10.0
+`webpack-dev-server` uses.)
+
+(NOTE/2021-01-30: The v4 series, still in beta, uses
+[`open`](https://www.npmjs.com/package/open), which forwards
+arguments to the Darwin ``open`` command, so you can add ``--new-window``
+to your webpack config to use a new browser window when you start the server.)
 
 ## Installation
 

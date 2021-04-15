@@ -63,9 +63,12 @@ _sensibleopen_format_open_command () {
 
   if [ -n "${location}" ]; then
     # You can pass a relative path to `sensible-browser` (and Chrome)
-    # on Linux, and it'll work; but on macOS, it gets treated differently.
+    # on Linux, and it'll work; but on macOS, it gets treated differently,
+    # e.g.,
+    #   open -na 'Google Chrome' --args --new-window "./subdir"
+    # opens the browser to the root-level path, `/subdir`.
     # So fully qualify the location.
-    [ -f "${location}" ] && location="$(readlink_f "${location}")"
+    [ -e "${location}" ] && location="$(readlink_f "${location}")"
     # Quote it, in case spaces in path name.
     location="\"${location}\""
   fi

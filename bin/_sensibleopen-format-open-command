@@ -87,6 +87,7 @@ _sensibleopen_format_options () {
   local options=""
   options="$(_sensibleopen_add_option_is_private "${browser_nickname}" "${options}" "${is_private}")"
   options="$(_sensibleopen_add_option_new_window "${browser_nickname}" "${options}" "${is_tabbing}")"
+  options="$(_sensibleopen_add_option_profiledir "${browser_nickname}" "${options}")"
 
   printf '%s' "${options}"
 }
@@ -123,6 +124,28 @@ _sensibleopen_add_option_new_window () {
     ; then
       options="${options}--new-window "
     fi
+  fi
+
+  printf '%s' "${options}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# 2022-01-05: Chrome recently added User Profiles, and opening a new
+# window without specifying the profile defaults to the most recently
+# used profile. Which can be annoying. The author's use case is that
+# most of my browsing is done in the context of the default user, and
+# then I have one-off windows open for a myriad of other accounts I
+# use, mostly to access email. So invariably I want new windows to
+# open in the context of the default user profile; and if I want to
+# access another user profile, I'll do so directly using the Profile
+# menu dropdown.
+_sensibleopen_add_option_profiledir () {
+  local browser_nickname="$1"
+  local options="$2"
+
+  if [ "${browser_nickname}" = 'chrome' ]; then
+    options="${options}--profile-directory=Default "
   fi
 
   printf '%s' "${options}"

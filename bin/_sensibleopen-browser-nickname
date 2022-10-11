@@ -154,7 +154,7 @@ shell_sourced () { [ "$(basename -- "$0")" != "${this_file_name}" ]; }
 bash_sourced () { declare -p FUNCNAME > /dev/null 2>&1; }
 
 if ! shell_sourced; then
-  _sensibleopen_browser_nickname "${@}"
+  _sensibleopen_browser_nickname "$@"
 else
   bash_sourced && export -f _sensibleopen_browser_nickname
   unset -v this_file_name

@@ -77,7 +77,10 @@ if ! shell_sourced; then
   source_deps "$0"
   sensible_open "$@"
 else
-  bash_sourced && export -f sensible_open
+  if bash_sourced; then
+    source_deps "${BASH_SOURCE[0]}"
+    export -f sensible_open
+  fi
   unset -v this_file_name
   unset -f shell_sourced
   unset -f bash_sourced

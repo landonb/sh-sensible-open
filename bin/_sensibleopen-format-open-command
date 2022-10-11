@@ -272,7 +272,10 @@ if ! shell_sourced; then
   source_deps "$0"
   _sensibleopen_format_open_command "$@"
 else
-  bash_sourced && export -f _sensibleopen_format_open_command
+  if bash_sourced; then
+    source_deps "${BASH_SOURCE[0]}"
+    export -f _sensibleopen_format_open_command
+  fi
   unset -v this_file_name
   unset -f shell_sourced
   unset -f bash_sourced

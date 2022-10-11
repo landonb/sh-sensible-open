@@ -78,9 +78,8 @@ if ! shell_sourced; then
   sensible_open "$@"
 else
   bash_sourced && export -f sensible_open
-  unset this_file_name
+  unset -v this_file_name
   unset -f shell_sourced
   unset -f bash_sourced
-  unset -v this_file_name
 fi
 

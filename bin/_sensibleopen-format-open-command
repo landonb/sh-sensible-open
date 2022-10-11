@@ -273,9 +273,8 @@ if ! shell_sourced; then
   _sensibleopen_format_open_command "$@"
 else
   bash_sourced && export -f _sensibleopen_format_open_command
-  unset this_file_name
+  unset -v this_file_name
   unset -f shell_sourced
   unset -f bash_sourced
-  unset -v this_file_name
 fi
 

@@ -182,6 +182,13 @@ _sensibleopen_format_command () {
       open_cmd="${open_cmd} 'Firefox'"
     elif [ "${browser_nickname}" = 'safari' ]; then
       open_cmd="${open_cmd} 'Safari'"
+    elif [ "${browser_nickname}" = 'finicky' ]; then
+      # Finicky is used for overriding GUI URL opening where we don't have
+      # control (e.g., so we can open links from Slack in a new window).
+      # - It doesn't make sense to call Finicky ourselves, so use Chrome.
+      #   - DEBAR: Chrome is the author's preferred browser, but we could
+      #     add an environ, e.g., BROWSER, so users can choose their own.
+      open_cmd="${open_cmd} 'Google Chrome'"
     fi
     if [ -n "${options}" ]; then
       open_cmd="${open_cmd} --args"

@@ -90,6 +90,14 @@ _sensibleopen_macOS_browser_nickname () {
     # /Applications/Sarari.app/Contents/MacOS/Safari
     # Note that Safari (a Cocoa app, not a CLI app) does not accept arguments.
     printf 'safari'
+  elif [ "${bundle_id_or_path}" = 'net.kassett.finicky' ]; then
+    # https://github.com/johnste/finicky
+    #  printf 'finicky'
+    # (lb): I only use Finicky for sending Slack URLs to a new window,
+    #       so assume in Finicky and sensible-open being called, that
+    #       user wants Chrome, for which we support --new-window and
+    #       other options that Finicky doesn't support from CLI args.
+    printf 'chrome'
   fi
 }
 

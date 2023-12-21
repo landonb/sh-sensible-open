@@ -6,8 +6,17 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# FILTR/2023-12-20: When did this start? Chromium seems to be burping
+# into the stream, e.g.,
+#
+#  $ sensible-open google.com
+#  $ [17999:17999:0100/000000.361789:ERROR:zygote_linux.cc(662)] write: Broken pipe (32)
+#  ▒
+#
+#  ^ With the cursor on a new black line.
 sensible_open () {
-  eval "$(_sensibleopen_format_open_command "$@") > /dev/null &"
+  eval "$(_sensibleopen_format_open_command "$@") 2>&1 >/dev/null \
+    | sed '/write: Broken pipe/d' &"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

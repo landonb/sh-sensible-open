@@ -128,12 +128,12 @@ _sensibleopen_Linux_browser_nickname () {
 
   local which_browser
   if false \
-    || [ "$(basename ${bundle_id_or_path})" = 'google-chrome' ] \
-    || [ "$(basename ${bundle_id_or_path})" = 'google-chrome-stable' ] \
-    || [ "$(basename ${bundle_id_or_path})" = 'chromium-browser' ] \
+    || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome' ] \
+    || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome-stable' ] \
+    || [ "$(basename -- "${bundle_id_or_path}")" = 'chromium-browser' ] \
   ; then
     printf 'chrome'
-  elif [ "$(basename ${bundle_id_or_path})" = 'firefox' ]; then
+  elif [ "$(basename -- "${bundle_id_or_path}")" = 'firefox' ]; then
     printf 'firefox'
   fi
 }

@@ -77,6 +77,8 @@ _sensibleopen_macOS_default_browser () {
     >&2 printf 'HTTPS: %s' " ${handler_https}"
   fi
 
+  command rm -- "${tempfile}"
+
   return 0
 }
 

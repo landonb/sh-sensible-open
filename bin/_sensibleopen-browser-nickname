@@ -87,7 +87,6 @@ _sensibleopen_macOS_default_browser () {
 _sensibleopen_macOS_browser_nickname () {
   local bundle_id_or_path="$1"
 
-  local which_browser
   if [ "${bundle_id_or_path}" = 'com.google.chrome' ]; then
     printf 'chrome'
   elif [ "${bundle_id_or_path}" = 'org.mozilla.firefox' ]; then
@@ -133,7 +132,6 @@ _sensibleopen_Linux_default_browser () {
 _sensibleopen_Linux_browser_nickname () {
   local bundle_id_or_path="$1"
 
-  local which_browser
   if false \
     || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome' ] \
     || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome-stable' ] \

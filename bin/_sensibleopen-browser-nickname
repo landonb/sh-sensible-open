@@ -24,6 +24,7 @@ _sensibleopen_browser_nickname () {
 
   if [ -z "${browser_nickname}" ]; then
     >&2 echo "ERROR: Unrecognized default browser: ${bundle_id_or_path}"
+
     exit 1
   fi
 
@@ -38,12 +39,14 @@ _sensibleopen_macOS_default_browser () {
   # Guard clause: Ensure Property List exists (and, by extension, is-macOS).
   if [ ! -f "${proplist}" ]; then
     >&2 printf '%s\n' "ERROR: Not found: LaunchServices Property List: ‘${proplist}’"
+
     return 1
   fi
 
   # Guard clause: Ensure `jq` installed.
   if ! command -v jq > /dev/null 2>&1; then
     >&2 printf '%s\n' "ERROR: Missing ‘jq’: Try: ‘brew install jq’"
+
     return 1
   fi
 
@@ -115,6 +118,7 @@ _sensibleopen_Linux_default_browser () {
 
   if test -z "${BROWSER}"; then
     printf "ERROR: Please set the BROWSER environment variable to your desired browser.\n" >&2
+
     return 1
   fi
 

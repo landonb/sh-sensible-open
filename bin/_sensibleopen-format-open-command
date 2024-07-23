@@ -194,8 +194,12 @@ _sensibleopen_format_command () {
       open_cmd="${open_cmd} --args"
     fi
   else
-    # The _sensibleopen_browser_nickname checked $BROWSER, so might as well use.
-    #  open_cmd='sensible-browser'
+    # The _sensibleopen_browser_nickname used $BROWSER to get the nickname
+    # (which was either 'chrome' or 'firefox', used to simplify the
+    # _sensibleopen_format_options function).
+    # - Also, if BROWSER unset, would've exited by now.
+    # - ALTLY: We could call /usr/bin/sensible-browser
+    #     open_cmd='sensible-browser'
     open_cmd="${BROWSER}"
   fi
 

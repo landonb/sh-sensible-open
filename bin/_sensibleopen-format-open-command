@@ -170,26 +170,25 @@ _sensibleopen_format_command () {
 
   local open_cmd=""
   if os_is_macos; then
-    if [ -z "${options}" ]; then
-      open_cmd='open -a'
+    local browser_app
+    browser_app="$(_sensibleopen_macOS_browser_app "${browser_nickname}")"
+
+    if [ -z "${browser_app}" ]; then
+      # Finicky.app is default browser.
+      open_cmd="open"
+      # Ignores 'options', but shouldn't be any.
+      options=""
     else
-      # See comments before function, necessary for --args to be effective.
-      open_cmd='open -na'
+      if [ -z "${options}" ]; then
+        open_cmd="open -a"
+      else
+        # See comments before function, necessary for --args to be effective.
+        open_cmd="open -na"
+      fi
+
+      open_cmd="${open_cmd} '${browser_app}'"
     fi
-    if [ "${browser_nickname}" = 'chrome' ]; then
-      open_cmd="${open_cmd} 'Google Chrome'"
-    elif [ "${browser_nickname}" = 'firefox' ]; then
-      open_cmd="${open_cmd} 'Firefox'"
-    elif [ "${browser_nickname}" = 'safari' ]; then
-      open_cmd="${open_cmd} 'Safari'"
-    elif [ "${browser_nickname}" = 'finicky' ]; then
-      # Finicky is used for overriding GUI URL opening where we don't have
-      # control (e.g., so we can open links from Slack in a new window).
-      # - It doesn't make sense to call Finicky ourselves, so use Chrome.
-      #   - DEBAR: Chrome is the author's preferred browser, but we could
-      #     add an environ, e.g., BROWSER, so users can choose their own.
-      open_cmd="${open_cmd} 'Google Chrome'"
-    fi
+
     if [ -n "${options}" ]; then
       open_cmd="${open_cmd} --args"
     fi

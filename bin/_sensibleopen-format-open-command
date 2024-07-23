@@ -168,7 +168,7 @@ _sensibleopen_format_command () {
   local browser_nickname="$1"
   local options="$2"
 
-  open_cmd=''
+  local open_cmd=""
   if os_is_macos; then
     if [ -z "${options}" ]; then
       open_cmd='open -a'

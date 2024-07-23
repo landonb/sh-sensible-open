@@ -73,6 +73,9 @@ _sensibleopen_format_open_command () {
     location="\"${location}\""
   fi
 
+  # Uncomment to audit the command.
+  #  >&2 printf '%s\n' "${open_cmd} ${open_options}${location}"
+
   printf '%s\n' "${open_cmd} ${open_options}${location}"
 }
 

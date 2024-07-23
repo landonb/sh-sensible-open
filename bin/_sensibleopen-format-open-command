@@ -203,7 +203,7 @@ _sensibleopen_format_command () {
     open_cmd="${BROWSER}"
   fi
 
-  printf '%s' "${open_cmd}"
+  printf "%s" "${open_cmd}"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

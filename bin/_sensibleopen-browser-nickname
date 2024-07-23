@@ -28,7 +28,7 @@ _sensibleopen_browser_nickname () {
     exit 1
   fi
 
-  printf "${browser_nickname}"
+  printf "%s" "${browser_nickname}"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
@@ -122,7 +122,7 @@ _sensibleopen_Linux_default_browser () {
     return 1
   fi
 
-  printf "${BROWSER}"
+  printf "%s" "${BROWSER}"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

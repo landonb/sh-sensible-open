@@ -15,8 +15,16 @@
 #
 #  ^ With the cursor on a new black line.
 sensible_open () {
-  eval "$(_sensibleopen_format_open_command "$@") 2>&1 >/dev/null \
-    | sed '/write: Broken pipe/d' &"
+  local browser_nickname=""
+  browser_nickname="$(_sensibleopen_browser_nickname)" ||
+    return $?
+
+  eval "$(
+    _sensibleopen_format_open_command "${browser_nickname}" "$@"
+  ) 2>&1 >/dev/null \
+  | sed '/write: Broken pipe/d' &"
+
+  _sensibleopen_focus_kludge "${browser_nickname}"
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

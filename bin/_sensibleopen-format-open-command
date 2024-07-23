@@ -42,15 +42,14 @@ _sensibleopen_format_command_parse_args () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _sensibleopen_format_open_command () {
+  local browser_nickname"$1"
+  shift
+
   _sensibleopen_format_command_parse_args "$@"
 
   local location="${SENSIBLE_OPEN_LOCATION}"
   local is_private=${SENSIBLE_OPEN_PRIVATE:-false}
   local is_tabbing=${SENSIBLE_OPEN_USE_TAB:-false}
-
-  local browser_nickname=""
-  browser_nickname="$(_sensibleopen_browser_nickname)" ||
-    return $?
 
   local open_options="$(
     _sensibleopen_format_options \
@@ -206,6 +205,91 @@ _sensibleopen_format_command () {
   fi
 
   printf "%s" "${open_cmd}"
+}
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
+# Use Hammerspoon hook to bring Chrome window to the front, in case
+# it opened behind the frontmost window.
+#
+# - In the author's experience, after you first start Chrome, the
+#   `open` command will create new windows in front, i.e., in front
+#   of the terminal window wherein you called `sensible-open`. But
+#   after a while, the new Chrome windows will start to open behind
+#   the terminal window. (It might be because of the author's
+#   Hammerspoon, skhd, and Karabiner Elements configs, and maybe
+#   they do something to the terminal window attributes or to the
+#   Chrome window attributes that makes this start happening.)
+#   - When Chrome starts doing this, quitting and restarting it
+#     makes new windows start opening in front of all other windows
+#     again.
+#
+# - Fortunately, the Hammerspoon API includes a number of application
+#   and window foregrounders that are more elegant than what Apple (or
+#   AppleScript) offers.
+#
+#   - E.g., `open -a 'Google Chrome'` will front Chrome, but it also
+#     brings all other visible Chrome windows above the current window.
+#
+#     And while you can still <Alt-Tab> to the most recently used window,
+#     that window is now buried under a bunch of other Chrome windows.
+#
+#     (This not only bothers the author visually, but also conceptually.
+#      Coming from the Linux (and before that, Windows) world, I'm used
+#      to <Alt-Tab> switching to the next window in the visible stack,
+#      and not to a buried window. (And I know that macOS is app-centric,
+#      not window-centric, but it's one of those few quirks about macOS
+#      that I still haven't got used to... and maybe never will... but
+#      Hammerspoon lets me at least fool myself for a while longer.))
+#
+# REFER: https://github.com/DepoXy/macOS-Hammyspoony#🥄
+# CXREF: ~/.kit/mOS/macOS-Hammyspoony/.hammerspoon/init.lua
+
+_sensibleopen_focus_kludge () {
+  local browser_nickname"$1"
+
+  if ! os_is_macos; then
+
+    return
+  fi
+
+  local finicky_cfg="${HOME}/.finicky.js"
+
+  local browser_app
+  if [ "${browser_nickname}" != 'finicky' ]; then
+    browser_app="$(_sensibleopen_macOS_browser_app "${browser_nickname}")"
+  elif command -v node > /dev/null && [ -f "${finicky_cfg}" ]; then
+    # Parse "defaultBrowser" from ~/.finicky.js
+    # - Note this isn't perfect, as the user could have written a
+    #   handler for opening URLs from the terminal. But it's also
+    #   very unlikely anyone is using sensible-open, Finicky, and
+    #   macOS-Hammyspoony other than the author.
+    browser_app="$(/bin/bash -c \
+      'node -e "$(< "${HOME}/.finicky.js"); process.stdout.write(module.exports.defaultBrowser);"' \
+    )"
+  fi
+
+  if [ -z "${browser_app}" ]; then
+
+    return
+  fi
+
+  local config_cfg="${HOME}/.hammerspoon/init.lua"
+  local spoony_cfg="${MOSREPOSPATH:-${DOPP_KIT:-${HOME}/.kit}/mOS}/macOS-Hammyspoony/.hammerspoon/init.lua"
+
+  if [ "$(realpath -- "${config_cfg}")" = "${spoony_cfg}" ]; then
+    # BWARE: It takes a split second for Chrome to respond with the new
+    # window. Though worst that happens if this runs to soon is that this
+    # could bring another Chrome window to the front, and then the new
+    # window on top (whereas setFrontmost will only bring one Chrome window
+    # on top of the other visible windows).
+    sleep 0.33
+
+    # Uncomment to audit the command.
+    #  >&2 echo "open -g \"hammerspoon://setFrontmost?app=${browser_app}\""
+
+    open -g "hammerspoon://setFrontmost?app=${browser_app}"
+  fi
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

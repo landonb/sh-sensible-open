@@ -15,22 +15,27 @@ _sensibleopen_format_command_parse_args () {
     case $1 in
       -p | --private | -i | --incognito)
         SENSIBLE_OPEN_PRIVATE=true
+
         shift
         ;;
       -t | --tab)
         SENSIBLE_OPEN_USE_TAB=true
+
         shift
         ;;
       -h | --help)
         echo "USAGE: $0 [-p|--private|--incognito] [-t|--tab] <path-or-URL>"
+
         exit 0
         ;;
       --)
         shift
+
         break
         ;;
       *)
         SENSIBLE_OPEN_LOCATION="$1"
+
         shift
         ;;
     esac

@@ -50,7 +50,8 @@ _sensibleopen_format_open_command () {
   local browser_nickname"$1"
   shift
 
-  _sensibleopen_format_command_parse_args "$@"
+  # Caller is responsible for having already parsed args, e.g.:
+  #   _sensibleopen_format_command_parse_args "$@"
 
   local location="${SENSIBLE_OPEN_LOCATION}"
   local is_private=${SENSIBLE_OPEN_PRIVATE:-false}
@@ -258,20 +259,11 @@ _sensibleopen_focus_kludge () {
     return
   fi
 
-  local finicky_cfg="${HOME}/.finicky.js"
-
   local browser_app
   if [ "${browser_nickname}" != 'finicky' ]; then
     browser_app="$(_sensibleopen_macOS_browser_app "${browser_nickname}")"
-  elif command -v node > /dev/null && [ -f "${finicky_cfg}" ]; then
-    # Parse "defaultBrowser" from ~/.finicky.js
-    # - Note this isn't perfect, as the user could have written a
-    #   handler for opening URLs from the terminal. But it's also
-    #   very unlikely anyone is using sensible-open, Finicky, and
-    #   macOS-Hammyspoony other than the author.
-    browser_app="$(/bin/bash -c \
-      'node -e "$(< "${HOME}/.finicky.js"); process.stdout.write(module.exports.defaultBrowser);"' \
-    )"
+  else
+    browser_app="$(_sensibleopen_macOS_finicky_default_browser)"
   fi
 
   if [ -z "${browser_app}" ]; then
@@ -295,6 +287,25 @@ _sensibleopen_focus_kludge () {
 
     open -g "hammerspoon://setFrontmost?app=${browser_app}"
   fi
+}
+
+_sensibleopen_macOS_finicky_default_browser () {
+  local finicky_cfg="${HOME}/.finicky.js"
+
+  if ! command -v node > /dev/null || ! [ -f "${finicky_cfg}" ]; then
+
+    return 0
+  fi
+
+  # Parse "defaultBrowser" from ~/.finicky.js
+  # - Note this isn't perfect, as the user could have written a
+  #   handler for opening URLs from the terminal. But it's also
+  #   very unlikely anyone is using sensible-open, Finicky, and
+  #   macOS-Hammyspoony other than the author.
+  /bin/bash -c '\
+    node -e "$(< "${HOME}/.finicky.js");
+    process.stdout.write(module.exports.defaultBrowser);"
+  '
 }
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #

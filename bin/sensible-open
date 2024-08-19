@@ -15,6 +15,10 @@
 #
 #  ^ With the cursor on a new black line.
 sensible_open () {
+  # Sets SENSIBLE_OPEN_* vars:
+  # - SENSIBLE_OPEN_LOCATION, SENSIBLE_OPEN_PRIVATE, SENSIBLE_OPEN_USE_TAB
+  _sensibleopen_format_command_parse_args "$@"
+
   local browser_nickname=""
   browser_nickname="$(_sensibleopen_browser_nickname)" ||
     return $?

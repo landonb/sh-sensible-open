@@ -62,7 +62,7 @@ to be explicit about the location, e.g.,
 ### Vim usage
 
 See the Vim plugin
-[`vim-web-hatch`](https://github.com/embrace-vim/vim-web-hatch)
+[`vim-webopen`](https://github.com/embrace-vim/vim-webopen)
 which uses this project to enable a feature that lets you
 open the file or URL under the cursor in a new browser window.
 

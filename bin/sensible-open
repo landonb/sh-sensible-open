@@ -38,49 +38,113 @@ sensible_open () {
 # *** <beg boilerplate `source_deps`: ------------------------------|
 #                                                                   |
 
-source_deps () {
-  local thispth="$1"
-  local prefix="."
-  local depsnok=false
+_sensible_open__this_filename="sensible-open"
 
-  _source_it () {
-    local prfx="${1:-.}"
-    local depd="${2:-.}"
-    local file="${3:-.}"
-    local path="${prfx}/${depd}/${file}"
-    if command -v "${file}" > /dev/null; then
-      # Use version found on PATH.
-      . "${file}"
-    elif [ -f "${path}" ]; then
-      # Fallback on local deps/ copy.
-      # NOTE: `dash` complains if missing './'.
-      . "${path}"
-    else
-      local depstxt=''
-      [ "${prfx}" != "." ] && depstxt="in ‘${prfx}/${depd}’ or "
-      >&2 echo "MISSING: ‘${file}’ not found ${depstxt}on PATH."
-      depsnok=true
-    fi
-  }
+_sensible_open__source_deps () {
+  local sourced_all=true
 
-  # Allow user to symlink executables and not libraries.
-  # E.g., `ln -s /path/to/bin/logger.sh /tmp/logger.sh ; /tmp/logger.sh`
-  # knows that it can look relative to /path/to/bin/ for sourceable files.
-  [ -n "${thispth}" ] && prefix="$(dirname -- "$(realpath -- "${thispth}")")"
+  # On Bash, user can source this file from anywhere.
+  # - If not Bash, user must `cd` to this file's parent directory first.
+  local prefix="$(dirname -- "${_sensible_open__this_fullpath}")"
+
+  # USAGE: Load dependencies using path relative to this file, e.g.:
+  #   _source_file "${prefix}" "../deps/path/to/lib" "dependency.sh"
 
   #                                                                 |
   # *** stop boilerplate> ------------------------------------------|
 
-  _source_it "${prefix}" "./" "_sensibleopen-format-open-command"
+  _sensible_open__source_file "${prefix}" "./" "_sensibleopen-format-open-command"
   # In lieu of the previous command calling its source_deps,
   # which it only does when executed (not sourced), do here:
-  _source_it "${prefix}" "./" "_sensibleopen-browser-nickname"
+  _sensible_open__source_file "${prefix}" "./" "_sensibleopen-browser-nickname"
 
   # *** <more boilerplate: -----------------------------------------|
   #                                                                 |
 
-  ! ${depsnok}
+  ${sourced_all}
 }
+
+_sensible_open__smells_like_bash () { declare -p BASH_SOURCE > /dev/null 2>&1; }
+
+_sensible_open__print_this_fullpath () {
+  if _sensible_open__smells_like_bash; then
+    echo "$(realpath -- "${BASH_SOURCE[0]}")"
+  elif [ "$(basename -- "$0")" = "${_sensible_open__this_filename}" ]; then
+    # Assumes this script being executed, and $0 is its path.
+    echo "$(realpath -- "$0")"
+  else
+    # Assumes cwd is this script's parent directory.
+    echo "$(realpath -- "${_sensible_open__this_filename}")"
+  fi
+}
+
+_sensible_open__this_fullpath="$(_sensible_open__print_this_fullpath)"
+
+_sensible_open__shell_sourced () {
+  [ "$(realpath -- "$0")" != "${_sensible_open__this_fullpath}" ]
+}
+
+_sensible_open__source_file () {
+  local prfx="${1:-.}"
+  local depd="${2:-.}"
+  local file="${3:-.}"
+
+  local deps_dir="${prfx}/${depd}"
+  local deps_path="${deps_dir}/${file}"
+
+  # Just in case sourced file overwrites top-level `_sensible_open__this_filename`,
+  # cache our copy, should we need it for an error message.
+  local _this_file_name="${_sensible_open__this_filename}"
+
+  if [ -f "${deps_path}" ]; then
+    # SAVVY: Source files from their dirs, so they can find their deps.
+    local before_cd="$(pwd -L)"
+    cd "${deps_dir}"
+    # SAVVY: If errexit, error while sourcing kills process immediately,
+    # and error you see might indicate this source file, but the line
+    # number for the file being sourced. E.g.,
+    #   /path/to/bin/myapp: 442: export: Illegal option -f
+    # where `442` is line number from, e.g., 'deps/lib/dep.sh'.
+    if ! . "${deps_path}"; then
+      >&2 echo "ERROR: Dependency ‘${file}’ returned nonzero when sourced"
+      sourced_all=false
+    fi
+    cd "${before_cd}"
+  else
+    local depstxt=""
+    [ "${prfx}" = "." ] || depstxt="in ‘${deps_dir}’ or "
+    >&2 echo "ERROR: ‘${file}’ not found under ‘${deps_dir}’"
+    if _sensible_open__smells_like_bash; then
+      >&2 echo "- GAFFE: This looks like an error with the ‘_sensible_open__source_file’ arguments"
+    else
+      >&2 echo "- HINT: You must source ‘${_this_file_name}’ from its parent directory"
+    fi
+    sourced_all=false
+  fi
+}
+
+# BONUS: You can use these aliases instead of the uniquely-named functions,
+# just be aware not to call any alias after calling _source_deps.
+_shell_sourced () { _sensible_open__shell_sourced; }
+_source_deps () { _sensible_open__source_deps; }
+
+_sensible_open__source_deps_unset_cleanup () {
+  unset -v _sensible_open__this_filename
+  unset -f _sensible_open__print_this_fullpath
+  unset -f _sensible_open__shell_sourced
+  unset -f _shell_sourced
+  unset -f _sensible_open__smells_like_bash
+  unset -f _sensible_open__source_deps
+  unset -f _source_deps
+  unset -f _sensible_open__source_deps_unset_cleanup
+  unset -f _sensible_open__source_file
+}
+
+# USAGE: When this file is being executed, before doing stuff, call:
+#   _source_deps
+# - When this file is being sourced, call both:
+#   _source_deps
+#   _sensible_open__source_deps_unset_cleanup
 
 #                                                                   |
 # *** end boilerplate `source_deps`> -------------------------------|
@@ -89,21 +153,23 @@ source_deps () {
 # ================================================================= #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-this_file_name='sensible-open'
-shell_sourced () { [ "$(basename -- "$0")" != "${this_file_name}" ]; }
-# Note that bash_sourced only meaningful if shell_sourced is true.
-bash_sourced () { declare -p FUNCNAME > /dev/null 2>&1; }
+main () {
+  set -e
 
-if ! shell_sourced; then
-  source_deps "$0"
+  _source_deps
+
   sensible_open "$@"
-else
-  if bash_sourced; then
-    source_deps "${BASH_SOURCE[0]}"
+}
+
+if _shell_sourced; then
+  _source_deps
+  if _sensible_open__smells_like_bash; then
     export -f sensible_open
   fi
-  unset -v this_file_name
-  unset -f shell_sourced
-  unset -f bash_sourced
+else
+  main "$@"
 fi
+
+_sensible_open__source_deps_unset_cleanup
+unset -f main
 

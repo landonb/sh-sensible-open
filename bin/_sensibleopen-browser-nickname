@@ -10,13 +10,13 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_browser_nickname () {
+_sensibleopen_browser_nickname() {
   local browser_nickname
   local bundle_id_or_path
 
   if os_is_macos; then
     bundle_id_or_path="$(_sensibleopen_macOS_default_browser)" || return $?
-    if ! browser_nickname="$( \
+    if ! browser_nickname="$(
       _sensibleopen_macOS_bypass_finicky_unless_http_location "${bundle_id_or_path}"
     )"; then
       browser_nickname="$(_sensibleopen_macOS_browser_nickname "${bundle_id_or_path}")"
@@ -37,7 +37,7 @@ _sensibleopen_browser_nickname () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_macOS_default_browser () {
+_sensibleopen_macOS_default_browser() {
   # CXREF: ~/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist
   local proplist="${HOME}/Library/Preferences/com.apple.LaunchServices/com.apple.launchservices.secure.plist"
 
@@ -49,7 +49,7 @@ _sensibleopen_macOS_default_browser () {
   fi
 
   # Guard clause: Ensure `jq` installed.
-  if ! command -v jq > /dev/null 2>&1; then
+  if ! command -v jq >/dev/null 2>&1; then
     >&2 printf '%s\n' "ERROR: Missing ‘jq’: Try: ‘brew install jq’"
 
     return 1
@@ -64,14 +64,14 @@ _sensibleopen_macOS_default_browser () {
 
   # Note there are both 'http' or 'https' handlers.
   # - Does it matter? We can compare and complain, I suppose
-  local handler_http=$( \
-    cat "${tempfile}" | \
-      /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "http") | .LSHandlerRoleAll' \
-    )
-  local handler_https=$( \
-    cat "${tempfile}" | \
-      /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "https") | .LSHandlerRoleAll' \
-    )
+  local handler_http=$(
+    cat "${tempfile}" |
+      /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "http") | .LSHandlerRoleAll'
+  )
+  local handler_https=$(
+    cat "${tempfile}" |
+      /usr/bin/env jq -r '.LSHandlers[]  | select(.LSHandlerURLScheme == "https") | .LSHandlerRoleAll'
+  )
 
   printf '%s' "${handler_http}"
 
@@ -92,12 +92,12 @@ _sensibleopen_macOS_default_browser () {
 # Finder, or your EDITOR, etc., but sensible-open (despite it's
 # name) is used to open whatever the user specified *in the browser*,
 # and only in the browser.
-_sensibleopen_macOS_bypass_finicky_unless_http_location () {
+_sensibleopen_macOS_bypass_finicky_unless_http_location() {
   local bundle_id_or_path="$1"
-  
-  if [ "${bundle_id_or_path}" != 'net.kassett.finicky' ] \
-    || echo "${SENSIBLE_OPEN_LOCATION}" | grep -q -e "^https\?:\/\/" \
-  ; then
+
+  if [ "${bundle_id_or_path}" != 'net.kassett.finicky' ] ||
+    echo "${SENSIBLE_OPEN_LOCATION}" | grep -q -e "^https\?:\/\/" \
+    ; then
     # Not Finicky, or location is http(s)://
 
     return 1
@@ -117,7 +117,7 @@ _sensibleopen_macOS_bypass_finicky_unless_http_location () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_macOS_browser_nickname () {
+_sensibleopen_macOS_browser_nickname() {
   local bundle_id_or_path="$1"
 
   if [ "${bundle_id_or_path}" = 'com.google.chrome' ]; then
@@ -142,7 +142,7 @@ _sensibleopen_macOS_browser_nickname () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_macOS_browser_nickname_from_app_name () {
+_sensibleopen_macOS_browser_nickname_from_app_name() {
   local app_name="$1"
 
   if [ "${app_name}" = 'Google Chrome' ]; then
@@ -162,7 +162,7 @@ _sensibleopen_macOS_browser_nickname_from_app_name () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_macOS_browser_app () {
+_sensibleopen_macOS_browser_app() {
   local browser_nickname"$1"
 
   if [ "${browser_nickname}" = 'chrome' ]; then
@@ -187,7 +187,7 @@ _sensibleopen_macOS_browser_app () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_Linux_default_browser () {
+_sensibleopen_Linux_default_browser() {
   # Ref: /usr/bin/sensible-browser
 
   # NOTE: If ${BROWSER} not set, could try, e.g.,
@@ -208,14 +208,14 @@ _sensibleopen_Linux_default_browser () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-_sensibleopen_Linux_browser_nickname () {
+_sensibleopen_Linux_browser_nickname() {
   local bundle_id_or_path="$1"
 
-  if false \
-    || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome' ] \
-    || [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome-stable' ] \
-    || [ "$(basename -- "${bundle_id_or_path}")" = 'chromium-browser' ] \
-  ; then
+  if false ||
+    [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome' ] ||
+    [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome-stable' ] ||
+    [ "$(basename -- "${bundle_id_or_path}")" = 'chromium-browser' ] \
+    ; then
     printf 'chrome'
   elif [ "$(basename -- "${bundle_id_or_path}")" = 'firefox' ]; then
     printf 'firefox'
@@ -224,7 +224,7 @@ _sensibleopen_Linux_browser_nickname () {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-os_is_macos () {
+os_is_macos() {
   [ "$(uname)" = 'Darwin' ]
 }
 
@@ -234,9 +234,9 @@ os_is_macos () {
 
 __sensibleopen_browser_nickname__this_filename="_sensibleopen-browser-nickname"
 
-__sensibleopen_browser_nickname__smells_like_bash () { declare -p BASH_SOURCE > /dev/null 2>&1; }
+__sensibleopen_browser_nickname__smells_like_bash() { declare -p BASH_SOURCE >/dev/null 2>&1; }
 
-__sensibleopen_browser_nickname__shell_sourced () {
+__sensibleopen_browser_nickname__shell_sourced() {
   [ "$(basename -- "$0")" != "${__sensibleopen_browser_nickname__this_filename}" ]
 }
 
@@ -250,4 +250,3 @@ else
   unset -f __sensibleopen_browser_nickname__smells_like_bash
   unset -f __sensibleopen_browser_nickname__shell_sourced
 fi
-

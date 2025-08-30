@@ -6,6 +6,10 @@
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+VERBOSE="${VERBOSE:-false}"
+
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
+
 # FILTR/2023-12-20: When did this start? Chromium seems to be burping
 # into the stream, e.g.,
 #
@@ -22,6 +26,12 @@ sensible_open () {
   local browser_nickname=""
   browser_nickname="$(_sensibleopen_browser_nickname)" ||
     return $?
+
+  if ${VERBOSE:-false}; then
+    >&2 echo "${browser_nickname}: $(
+      _sensibleopen_format_open_command "${browser_nickname}" "$@"
+    )"
+  fi
 
   eval "$(
     _sensibleopen_format_open_command "${browser_nickname}" "$@"

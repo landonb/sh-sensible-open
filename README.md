@@ -1,4 +1,4 @@
-# `sh-sensible-open`
+# `sh-sensible-open` 🪂
 
 A Debian-like `sensible-browser` that's macOS-friendly (and still works on
 Linux) that defaults ``--new-window`` and offers a generic incognito option.

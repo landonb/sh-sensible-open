@@ -74,7 +74,9 @@ _sensible_open__source_deps () {
   ${sourced_all}
 }
 
-_sensible_open__smells_like_bash () { declare -p BASH_SOURCE > /dev/null 2>&1; }
+_sensible_open__smells_like_bash() {
+  declare -p BASH_SOURCE >/dev/null 2>&1
+}
 
 _sensible_open__print_this_fullpath () {
   if _sensible_open__smells_like_bash; then

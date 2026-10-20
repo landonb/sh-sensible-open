@@ -18,7 +18,7 @@ VERBOSE="${VERBOSE:-false}"
 #  ▒
 #
 #  ^ With the cursor on a new black line.
-sensible_open () {
+sensible_open() {
   # Sets SENSIBLE_OPEN_* vars:
   # - SENSIBLE_OPEN_LOCATION, SENSIBLE_OPEN_PRIVATE, SENSIBLE_OPEN_USE_TAB
   _sensibleopen_format_command_parse_args "$@"
@@ -50,7 +50,7 @@ sensible_open () {
 
 _sensible_open__this_filename="sensible-open"
 
-_sensible_open__source_deps () {
+_sensible_open__source_deps() {
   local sourced_all=true
 
   # On Bash, user can source this file from anywhere.
@@ -78,7 +78,7 @@ _sensible_open__smells_like_bash() {
   declare -p BASH_SOURCE >/dev/null 2>&1
 }
 
-_sensible_open__print_this_fullpath () {
+_sensible_open__print_this_fullpath() {
   if _sensible_open__smells_like_bash; then
     # Array lookup not POSIX, so this line gaited (avoids
     # 'Bad substitution' # error), but we also don't want
@@ -97,11 +97,11 @@ _sensible_open__print_this_fullpath () {
 
 _sensible_open__this_fullpath="$(_sensible_open__print_this_fullpath)"
 
-_sensible_open__shell_sourced () {
+_sensible_open__shell_sourced() {
   [ "$(realpath -- "$0")" != "${_sensible_open__this_fullpath}" ]
 }
 
-_sensible_open__source_file () {
+_sensible_open__source_file() {
   local prfx="${1:-.}"
   local depd="${2:-.}"
   local file="${3:-.}"
@@ -142,10 +142,10 @@ _sensible_open__source_file () {
 
 # BONUS: You can use these aliases instead of the uniquely-named functions,
 # just be aware not to call any alias after calling _source_deps.
-_shell_sourced () { _sensible_open__shell_sourced; }
-_source_deps () { _sensible_open__source_deps; }
+_shell_sourced() { _sensible_open__shell_sourced; }
+_source_deps() { _sensible_open__source_deps; }
 
-_sensible_open__source_deps_unset_cleanup () {
+_sensible_open__source_deps_unset_cleanup() {
   unset -v _sensible_open__this_filename
   unset -f _sensible_open__print_this_fullpath
   unset -f _sensible_open__shell_sourced
@@ -170,7 +170,7 @@ _sensible_open__source_deps_unset_cleanup () {
 # ================================================================= #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
-main () {
+main() {
   set -e
 
   _source_deps
@@ -189,4 +189,3 @@ fi
 
 _sensible_open__source_deps_unset_cleanup
 unset -f main
-

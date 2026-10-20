@@ -80,7 +80,12 @@ _sensible_open__smells_like_bash() {
 
 _sensible_open__print_this_fullpath () {
   if _sensible_open__smells_like_bash; then
-    echo "$(realpath -- "${BASH_SOURCE[0]}")"
+    # Array lookup not POSIX, so this line gaited (avoids
+    # 'Bad substitution' # error), but we also don't want
+    # 'shfmt' to see it, or it'll fail to auto-format the
+    # file itself. So not this:
+    #   echo "$(realpath -- "${BASH_SOURCE[0]}")"
+    eval "realpath -- \"\${BASH_SOURCE[0]}\""
   elif [ "$(basename -- "$0")" = "${_sensible_open__this_filename}" ]; then
     # Assumes this script being executed, and $0 is its path.
     echo "$(realpath -- "$0")"

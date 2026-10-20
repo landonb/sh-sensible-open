@@ -33,10 +33,19 @@ sensible_open() {
     )"
   fi
 
+  # SAVVY: Ignore unimpactful Chrome (on Debian GNOME Shell Wayland) messages, e.g.:
+  #   $ /usr/bin/google-chrome --new-window --profile-directory=Default "/home/user/.../some/dir"
+  #   Opening in existing browser session.
+  #   [368327:368327:0100/000000.774812:ERROR:content/zygote/zygote_linux.cc:662]
+  #     write: Broken pipe (32)
+  #   [1:1:0100/000000.781423:ERROR:content/zygote/zygote_main_linux.cc:197]
+  #     Failed sending zygote boot message: Broken pipe (32)
+
   eval "$(
     _sensibleopen_format_open_command "${browser_nickname}" "$@"
   ) 2>&1 >/dev/null \
-  | sed '/write: Broken pipe/d' &"
+  | sed '/write: Broken pipe/d' \
+  | sed '/Failed sending zygote boot message: Broken pipe/d' &"
 
   _sensibleopen_focus_kludge "${browser_nickname}"
 }

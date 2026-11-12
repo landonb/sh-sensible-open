@@ -190,20 +190,32 @@ _sensibleopen_macOS_browser_app() {
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
+# SAVVY: If ${BROWSER} not set, could try, e.g.,
+#
+#     $ sensible-browser --version
+#     Google Chrome 88.0.4324.96
+#     Mozilla Firefox 84.0.2
+#     Chromium 87.0.4280.66 Built on Ubuntu , running on LinuxMint 19.3
+#
+# - 2026-11-11: On Debian 13 with Firefox release installed,
+#   and other MIME configuration:
+#
+#     $ sensible-browser --version
+#     firefox hB
+
 _sensibleopen_Linux_default_browser() {
   # Ref: /usr/bin/sensible-browser
 
-  # NOTE: If ${BROWSER} not set, could try, e.g.,
-  #
-  #         $ sensible-browser --version
-  #         Google Chrome 88.0.4324.96
-  #         Mozilla Firefox 84.0.2
-  #         Chromium 87.0.4280.66 Built on Ubuntu , running on LinuxMint 19.3
-
   if test -z "${BROWSER}"; then
-    printf "ERROR: Please set the BROWSER environment variable to your desired browser.\n" >&2
+    if ! ${SENSIBLE_STRICT:-false}; then
+      printf "%s" "sensible-browser"
 
-    return 1
+      return 0
+    else
+      printf "ERROR: Please set the BROWSER environment variable to your desired browser.\n" >&2
+
+      return 1
+    fi
   fi
 
   printf "%s" "${BROWSER}"
@@ -219,9 +231,11 @@ _sensibleopen_Linux_browser_nickname() {
     [ "$(basename -- "${bundle_id_or_path}")" = 'google-chrome-stable' ] ||
     [ "$(basename -- "${bundle_id_or_path}")" = 'chromium-browser' ] \
     ; then
-    printf 'chrome'
+    printf "%s" "chrome"
   elif [ "$(basename -- "${bundle_id_or_path}")" = 'firefox' ]; then
-    printf 'firefox'
+    printf "%s" "firefox"
+  elif [ "${bundle_id_or_path}" = 'sensible-browser' ]; then
+    printf "%s" "sensible-browser"
   fi
 }
 

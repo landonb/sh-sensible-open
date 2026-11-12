@@ -200,7 +200,7 @@ _sensibleopen_format_command () {
     if [ -n "${options}" ]; then
       open_cmd="${open_cmd} --args"
     fi
-  else
+  elif test -n "${BROWSER}"; then
     # The _sensibleopen_browser_nickname used $BROWSER to get the nickname
     # (which was either 'chrome' or 'firefox', used to simplify the
     # _sensibleopen_format_options function).
@@ -208,6 +208,8 @@ _sensibleopen_format_command () {
     # - ALTLY: We could call /usr/bin/sensible-browser
     #     open_cmd='sensible-browser'
     open_cmd="${BROWSER}"
+  else
+    open_cmd="sensible-browser"
   fi
 
   printf "%s" "${open_cmd}"

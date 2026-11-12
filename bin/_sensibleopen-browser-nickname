@@ -166,7 +166,7 @@ _sensibleopen_macOS_browser_nickname_from_app_name() {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _sensibleopen_macOS_browser_app() {
-  local browser_nickname"$1"
+  local browser_nickname="$1"
 
   if [ "${browser_nickname}" = 'chrome' ]; then
     printf 'Google Chrome'

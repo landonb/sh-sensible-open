@@ -47,7 +47,7 @@ _sensibleopen_format_command_parse_args () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _sensibleopen_format_open_command () {
-  local browser_nickname"$1"
+  local browser_nickname="$1"
   shift
 
   # Caller is responsible for having already parsed args, e.g.:
@@ -87,9 +87,9 @@ _sensibleopen_format_open_command () {
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ #
 
 _sensibleopen_format_options () {
-  local browser_nickname"$1"
-  local options"$2"
-  local is_private"$3"
+  local browser_nickname="$1"
+  local options="$2"
+  local is_private="$3"
   local is_tabbing="$4"
 
   local options=""
@@ -252,7 +252,7 @@ _sensibleopen_format_command () {
 # CXREF: ~/.kit/mOS/macOS-Hammyspoony/.hammerspoon/init.lua
 
 _sensibleopen_focus_kludge () {
-  local browser_nickname"$1"
+  local browser_nickname="$1"
 
   if ! os_is_macos; then
 
